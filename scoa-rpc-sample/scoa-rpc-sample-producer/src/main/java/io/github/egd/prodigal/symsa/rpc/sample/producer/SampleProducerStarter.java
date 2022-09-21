@@ -1,5 +1,6 @@
 package io.github.egd.prodigal.symsa.rpc.sample.producer;
 
+import io.github.egd.prodigal.scoa.rpc.client.EnableScoaRpcClient;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -13,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableEurekaClient
 @EnableDiscoveryClient
 @EnableFeignClients
+@EnableScoaRpcClient
 public class SampleProducerStarter {
 
     public static void main(String[] args) {
