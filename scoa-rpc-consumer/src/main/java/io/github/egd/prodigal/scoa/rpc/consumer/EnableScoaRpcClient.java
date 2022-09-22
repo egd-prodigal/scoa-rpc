@@ -11,4 +11,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Import(ScoaRpcClientConfiguration.class)
 public @interface EnableScoaRpcClient {
+
+
+
 }
