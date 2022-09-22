@@ -8,7 +8,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>scoa-rpc-register</module>
-        <module>scoa-rpc-sample-producer</module>
+        <module>scoa-rpc-sample-provider</module>
         <module>scoa-rpc-sample-consumer</module>
     </modules>
     <packaging>pom</packaging>
