@@ -1,6 +1,6 @@
 package io.github.egd.prodigal.scoa.rpc.sample.consumer;
 
-import io.github.egd.prodigal.scoa.rpc.consumer.EnableScoaRpcClient;
+import io.github.egd.prodigal.scoa.rpc.consumer.EnableScoaRpcConsumer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableEurekaClient
 @EnableDiscoveryClient
 @EnableFeignClients
-@EnableScoaRpcClient
+@EnableScoaRpcConsumer
 public class SampleConsumerStarter {
 
     public static void main(String[] args) {

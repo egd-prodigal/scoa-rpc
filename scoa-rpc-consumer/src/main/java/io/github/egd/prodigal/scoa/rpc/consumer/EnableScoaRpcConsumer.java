@@ -9,8 +9,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-@Import(ScoaRpcClientConfiguration.class)
-public @interface EnableScoaRpcClient {
+@Import(ScoaRpcConsumerRegister.class)
+public @interface EnableScoaRpcConsumer {
 
 
 
