@@ -20,11 +20,8 @@ public class ScoaRpcConsumerFactory implements FactoryBean<Object>, ApplicationC
 
     @Override
     public Object getObject() throws Exception {
-        return Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type},
-                (proxy, method, args) -> {
-                    System.out.println(restTemplate);
-                    return "proxy";
-                });
+        ScoaRpcConsumerProxy scoaRpcConsumerProxy = new ScoaRpcConsumerProxy(restTemplate);
+        return Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type}, scoaRpcConsumerProxy);
     }
 
     @Override

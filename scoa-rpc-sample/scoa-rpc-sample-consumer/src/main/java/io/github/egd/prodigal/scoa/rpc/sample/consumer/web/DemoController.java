@@ -1,6 +1,7 @@
 package io.github.egd.prodigal.scoa.rpc.sample.consumer.web;
 
 import io.github.egd.prodigal.scoa.rpc.annotations.ScoaRpcConsumer;
+import io.github.egd.prodigal.scoa.rpc.dto.User;
 import io.github.egd.prodigal.scoa.rpc.sample.consumer.integration.DemoApi;
 import io.github.egd.prodigal.scoa.rpc.sample.consumer.integration.DemoClientIntegration;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +16,7 @@ import java.util.Map;
 public class DemoController {
 
 
-    @ScoaRpcConsumer
+    @Autowired
     private RestTemplate restTemplate;
 
     @Autowired
@@ -28,8 +29,9 @@ public class DemoController {
     public String demo() {
         Map<String, Object> demo = demoApi.demo();
         System.out.println(demo);
-        Object test = demoClientIntegration.test();
-        System.out.println(test);
+        User user = demoClientIntegration.test();
+        System.out.println(user.getUsername());
+//        System.out.println(test);
         ResponseEntity<String> response = restTemplate.getForEntity("http://sample-provider/demo", String.class);
         return response.getBody();
     }

@@ -19,4 +19,9 @@ public class ScoaRpcConsumerConfiguration {
         return new RestTemplate();
     }
 
+    @Bean
+    public ScoaRpcConsumerContext scoaRpcConsumerContext() {
+        return new ScoaRpcConsumerContext();
+    }
+
 }
