@@ -10,4 +10,8 @@ public class DemoClientIntegration {
     @ScoaRpcConsumer(version = "1.0.1", group = "sample")
     private DemoClient demoClient;
 
+    public Object test() {
+        return demoClient.hello();
+    }
+
 }

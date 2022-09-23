@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.Map;
 
-@FeignClient(value = "sample-consumer")
+@FeignClient(value = "sample-provider")
 public interface DemoApi {
 
     @RequestMapping("/demo")

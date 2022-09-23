@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 @EnableEurekaClient
 @EnableDiscoveryClient
 @EnableFeignClients
-@EnableScoaRpcConsumer
+@EnableScoaRpcConsumer(basePackages = "io.github.egd.prodigal.scoa.rpc.client")
 public class SampleConsumerStarter {
 
     public static void main(String[] args) {
