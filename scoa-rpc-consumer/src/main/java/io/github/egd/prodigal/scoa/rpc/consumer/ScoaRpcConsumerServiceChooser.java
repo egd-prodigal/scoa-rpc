@@ -40,7 +40,7 @@ public class ScoaRpcConsumerServiceChooser implements InvocationHandler {
         if (parameterTypes.length > 0) {
             String[] parameterTypeNames = new String[parameterTypes.length];
             for (int i = 0; i < parameterTypes.length; i++) {
-                parameterTypeNames[i] = parameterTypes[i].getSimpleName();
+                parameterTypeNames[i] = parameterTypes[i].getName();
             }
             serviceId = serviceHolder.chooseServiceId(packageName, className, version, group, methodName, parameterTypeNames);
         } else {

@@ -1,9 +1,12 @@
 package io.github.egd.prodigal.scoa.rpc.provider;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
+@AutoConfigureBefore()
 public class ScoaRpcProviderConfiguration {
 
     @Bean
@@ -18,6 +21,11 @@ public class ScoaRpcProviderConfiguration {
         registrationBean.setServlet(scoaRpcDispatchServlet);
         registrationBean.addUrlMappings("/scoa-rpc/provider");
         return registrationBean;
+    }
+
+    @Bean
+    public ScoaRpcProviderBeanProcessor scoaRpcProviderBeanProcessor() {
+        return new ScoaRpcProviderBeanProcessor();
     }
 
 }
