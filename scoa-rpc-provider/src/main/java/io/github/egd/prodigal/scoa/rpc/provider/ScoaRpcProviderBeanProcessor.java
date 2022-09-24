@@ -14,6 +14,12 @@ public class ScoaRpcProviderBeanProcessor implements BeanPostProcessor {
 
     private final Set<Class<?>> list = new HashSet<>();
 
+    private final Integer port;
+
+    public ScoaRpcProviderBeanProcessor(Integer port) {
+        this.port = port;
+    }
+
     @Override
     public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
         Class<?> targetClass = AopUtils.getTargetClass(bean);
@@ -69,8 +75,14 @@ public class ScoaRpcProviderBeanProcessor implements BeanPostProcessor {
                 scoaRpcProvider.append(String.join(";", value));
                 scoaRpcProvider.append("}&");
             }
-            eurekaInstanceConfigBean.getMetadataMap().put("scoa.rpc.provider", scoaRpcProvider.substring(0, scoaRpcProvider.length() - 1));
+            eurekaInstanceConfigBean.getMetadataMap().put("scoa.rpc.provider.info", scoaRpcProvider.substring(0, scoaRpcProvider.length() - 1));
+            eurekaInstanceConfigBean.getMetadataMap().put("scoa.rpc.provider.port", String.valueOf(port));
         }
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
     }
+
+    public Integer getPort() {
+        return port;
+    }
+
 }

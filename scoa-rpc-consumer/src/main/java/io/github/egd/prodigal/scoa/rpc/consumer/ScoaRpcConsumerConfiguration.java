@@ -14,7 +14,7 @@ public class ScoaRpcConsumerConfiguration {
     }
 
     @Bean("scoaRpcConsumerRestTemplate")
-    @LoadBalanced
+//    @LoadBalanced
     public RestTemplate restTemplate() {
         return new RestTemplate();
     }

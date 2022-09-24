@@ -3,6 +3,7 @@ package io.github.egd.prodigal.scoa.rpc.consumer;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
+import com.netflix.loadbalancer.Server;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -32,15 +33,8 @@ public class ScoaRpcConsumerProxy implements InvocationHandler {
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         Class<?> returnType = method.getReturnType();
         // 这里进行微服务调用
-        String instanceName = (String) args[args.length - 3];
-        String version = (String) args[args.length - 2];
-        String group = (String) args[args.length - 1];
-        URI uri = UriComponentsBuilder.newInstance()
-                .scheme("http")
-                .host(instanceName)
-                .path("/scoa-rpc/provider")
-                .build()
-                .toUri();
+        Server server = (Server) args[args.length - 1];
+        URI uri = UriComponentsBuilder.newInstance().scheme("http").host(server.getHost()).port(server.getPort()).path("/").build().toUri();
         RequestEntity.BodyBuilder bodyBuilder = RequestEntity.post(uri);
         Class<?>[] parameterTypes = method.getParameterTypes();
         String scoaProvider = method.getDeclaringClass().getName() + "#" + method.getName() + "#"
@@ -48,18 +42,18 @@ public class ScoaRpcConsumerProxy implements InvocationHandler {
         bodyBuilder.header("scoa-provider", scoaProvider);
         RequestEntity<?> requestEntity;
         JsonObject jsonObject = new JsonObject();
-        if (args.length > 3) {
+        if (args.length > 1) {
             // 有额外参数
-            for (int i = 0; i < args.length - 3; i++) {
+            for (int i = 0; i < args.length - 1; i++) {
                 Object arg = args[i];
                 JsonObject argJson = new JsonObject();
                 argJson.addProperty("class", arg.getClass().getName());
                 argJson.addProperty("data", gson.toJson(arg));
                 jsonObject.add("arg" + i, argJson);
             }
-            jsonObject.addProperty("argNumber", args.length - 3);
+            jsonObject.addProperty("args", args.length - 1);
         } else {
-            jsonObject.addProperty("argNumber", 0);
+            jsonObject.addProperty("args", 0);
         }
         String body = jsonObject.toString();
         requestEntity = bodyBuilder.body(body);

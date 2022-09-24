@@ -3,6 +3,8 @@ package io.github.egd.prodigal.scoa.rpc.consumer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import com.netflix.appinfo.InstanceInfo;
 import com.netflix.loadbalancer.DynamicServerListLoadBalancer;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
@@ -13,6 +15,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
+import org.springframework.cloud.netflix.eureka.EurekaServiceInstance;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
@@ -30,9 +33,13 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
 
     private final Logger logger = LoggerFactory.getLogger(ScoaRpcConsumerServiceHolder.class);
 
-    private static final String SCOA_RPC_PROVIDER = "scoa.rpc.provider";
+    private static final String SCOA_RPC_PROVIDER_INFO = "scoa.rpc.provider.info";
+
+    private static final String SCOA_RPC_PROVIDER_PORT = "scoa.rpc.provider.port";
 
     private static final JsonObject providerHolder = new JsonObject();
+
+    private static final Map<String, List<InstanceInfo>> instanceInfoMap = new HashMap<>();
 
     private static final Map<String, ILoadBalancer> loadBalancerMap = new HashMap<>();
 
@@ -45,7 +52,7 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
 
     @Override
-    public void onApplicationEvent(HeartbeatEvent event) {
+    public void onApplicationEvent(@NonNull HeartbeatEvent event) {
         afterSingletonsInstantiated();
     }
 
@@ -55,26 +62,42 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
         List<String> services = discoveryClient.getServices();
         if (services.size() > 0) {
             JsonObject providers = new JsonObject();
+            Map<String, List<InstanceInfo>> map = new HashMap<>();
             services.forEach(service -> {
                 List<ServiceInstance> instances = discoveryClient.getInstances(service);
+                List<InstanceInfo> rpcInstances = new ArrayList<>();
                 instances.forEach(serviceInstance -> {
                     Map<String, String> metadata = serviceInstance.getMetadata();
-                    if (metadata.containsKey(SCOA_RPC_PROVIDER)) {
-                        String rpcProvider = metadata.get(SCOA_RPC_PROVIDER);
+                    if (metadata.containsKey(SCOA_RPC_PROVIDER_INFO)) {
+                        String rpcProvider = metadata.get(SCOA_RPC_PROVIDER_INFO);
                         registerRpcProvider(providers, service, rpcProvider);
                     }
+                    if (metadata.containsKey(SCOA_RPC_PROVIDER_PORT)) {
+                        InstanceInfo.Builder builder = InstanceInfo.Builder.newBuilder();
+                        EurekaServiceInstance eurekaServiceInstance = (EurekaServiceInstance) serviceInstance;
+                        InstanceInfo instanceInfo = eurekaServiceInstance.getInstanceInfo();
+                        builder.setIPAddr(instanceInfo.getIPAddr());
+                        builder.setPort(Integer.parseInt(metadata.get(SCOA_RPC_PROVIDER_PORT)));
+                        builder.setAppName(service);
+                        builder.setInstanceId(instanceInfo.getInstanceId());
+                        rpcInstances.add(builder.build());
+                    }
                 });
+                map.put(service, rpcInstances);
             });
             writeLock.lock();
             try {
                 providerHolder.remove("providers");
                 providerHolder.add("providers", providers);
+                instanceInfoMap.clear();
+                instanceInfoMap.putAll(map);
                 loadBalancerMap.clear();
             } finally {
                 writeLock.unlock();
             }
         }
         logger.info("provider-holder: {}", providerHolder);
+        logger.info("instance-map: {}", instanceInfoMap);
     }
 
     private synchronized void registerRpcProvider(JsonObject providers, String serviceId, String rpcProvider) {
@@ -137,16 +160,16 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
                         parameterJson = new JsonArray();
                         methodJson.add(parameterNames, parameterJson);
                     }
-                    parameterJson.add(serviceId);
+                    if (!parameterJson.contains(new JsonPrimitive(serviceId))) {
+                        parameterJson.add(serviceId);
+                    }
                 }
             }
         }
     }
 
-    public String chooseServiceId(String packageName, String className, String version, String group,
-                                  String methodName, String... parameterTypes) {
-        String key = String.join(",", packageName, className, version, group, methodName,
-                parameterTypes == null ? "" : String.join(",", parameterTypes));
+    public Server chooseServer(String packageName, String className, String version, String group, String methodName, String... parameterTypes) {
+        String key = String.join(",", packageName, className, version, group, methodName, parameterTypes == null ? "" : String.join(",", parameterTypes));
         ILoadBalancer loadBalancer;
         readLock.lock();
         try {
@@ -157,7 +180,10 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
         if (loadBalancer == null) {
             List<String> services = chooseServices(packageName, className, version, group, methodName, parameterTypes);
             loadBalancer = new DynamicServerListLoadBalancer<>();
-            loadBalancer.addServers(services.stream().map(Server::new).collect(Collectors.toList()));
+            List<Server> servers = services.stream().flatMap(service -> instanceInfoMap.get(service).stream())
+                    .map(instanceInfo -> new Server("http", instanceInfo.getIPAddr(), instanceInfo.getPort()))
+                    .collect(Collectors.toList());
+            loadBalancer.addServers(servers);
             writeLock.lock();
             try {
                 loadBalancerMap.put(key, loadBalancer);
@@ -165,12 +191,10 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
                 writeLock.unlock();
             }
         }
-        Server server = loadBalancer.chooseServer(null);
-        return server.getHost();
+        return loadBalancer.chooseServer(null);
     }
 
-    public List<String> chooseServices(String packageName, String className, String version, String group,
-                                       String methodName, String... parameterTypes) {
+    public List<String> chooseServices(String packageName, String className, String version, String group, String methodName, String... parameterTypes) {
         JsonObject providers;
         readLock.lock();
         try {
@@ -212,8 +236,7 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
                 }
             }
         }
-        String message = String.format("cannot find service by provider: %s.%s:%s:%s#%s(%s)", packageName, className,
-                version, group, methodName, parameterTypes == null ? "" : String.join(",", parameterTypes));
+        String message = String.format("cannot find service by provider: %s.%s:%s:%s#%s(%s)", packageName, className, version, group, methodName, parameterTypes == null ? "" : String.join(",", parameterTypes));
         logger.error(message);
         throw new RuntimeException(message);
     }

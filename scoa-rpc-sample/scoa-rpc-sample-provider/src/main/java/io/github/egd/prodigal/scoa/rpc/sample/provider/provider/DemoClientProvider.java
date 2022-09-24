@@ -3,9 +3,14 @@ package io.github.egd.prodigal.scoa.rpc.sample.provider.provider;
 import io.github.egd.prodigal.scoa.rpc.annotations.ScoaRpcProvider;
 import io.github.egd.prodigal.scoa.rpc.client.DemoClient;
 import io.github.egd.prodigal.scoa.rpc.dto.User;
+import io.github.egd.prodigal.scoa.rpc.sample.provider.service.DemoService;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @ScoaRpcProvider(version = "1.0.1", group = "sample")
 public class DemoClientProvider implements DemoClient {
+
+    @Autowired
+    private DemoService demoService;
 
     @Override
     public String hello() {
@@ -14,17 +19,14 @@ public class DemoClientProvider implements DemoClient {
 
     @Override
     public User getUser() {
-        User user = new User();
-        user.setUsername("yeemin");
-        user.setEmail("yeeminshon@hotmail.com");
-        return user;
+        return demoService.getUser();
     }
 
     @Override
     public User getUserByUsername(String username) {
         User user = new User();
         user.setUsername(username);
-        user.setEmail("yeeminshon@hotmail.com");
+        user.setEmail("yeeminshon@outlook.com");
         return user;
     }
 

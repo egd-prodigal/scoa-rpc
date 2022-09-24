@@ -19,7 +19,6 @@ public class DemoController {
     @RequestMapping("/demo")
     public User demo() {
         User user = demoClient.getUser();
-        logger.info("user: {}", user);
         user = demoClient.getUserByUsername("yeeminshon");
         return user;
     }
