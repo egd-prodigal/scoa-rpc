@@ -194,7 +194,7 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
                         JsonObject methodElement = groupElement.getAsJsonObject(methodName);
                         if (methodElement != null) {
                             String parameterNames;
-                            if (parameterTypes == null) {
+                            if (parameterTypes == null || parameterTypes.length == 0) {
                                 parameterNames = "()";
                             } else {
                                 parameterNames = String.join(",", parameterTypes);

@@ -2,6 +2,7 @@ package io.github.egd.prodigal.scoa.rpc.consumer;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.RequestEntity;
@@ -14,8 +15,8 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class ScoaRpcConsumerProxy implements InvocationHandler {
 
@@ -37,23 +38,31 @@ public class ScoaRpcConsumerProxy implements InvocationHandler {
         URI uri = UriComponentsBuilder.newInstance()
                 .scheme("http")
                 .host(instanceName)
-                .path("/scoa-rpc")
+                .path("/scoa-rpc/provider")
                 .build()
                 .toUri();
         RequestEntity.BodyBuilder bodyBuilder = RequestEntity.post(uri);
-        String scoaProvider = method.getDeclaringClass().getName() + "#" + method.getName() + ":" + group + ":" + version;
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        String scoaProvider = method.getDeclaringClass().getName() + "#" + method.getName() + "#"
+                + (parameterTypes.length > 0 ? Arrays.stream(parameterTypes).map(Class::getName).collect(Collectors.joining(",")) : "");
         bodyBuilder.header("scoa-provider", scoaProvider);
         RequestEntity<?> requestEntity;
+        JsonObject jsonObject = new JsonObject();
         if (args.length > 3) {
             // 有额外参数
-            Map<String, Object> map = new HashMap<>();
             for (int i = 0; i < args.length - 3; i++) {
-                map.put("arg" + i, args[i]);
+                Object arg = args[i];
+                JsonObject argJson = new JsonObject();
+                argJson.addProperty("class", arg.getClass().getName());
+                argJson.addProperty("data", gson.toJson(arg));
+                jsonObject.add("arg" + i, argJson);
             }
-            requestEntity = bodyBuilder.body(map);
+            jsonObject.addProperty("argNumber", args.length - 3);
         } else {
-            requestEntity = bodyBuilder.build();
+            jsonObject.addProperty("argNumber", 0);
         }
+        String body = jsonObject.toString();
+        requestEntity = bodyBuilder.body(body);
         ResponseEntity<Resource> responseEntity = restTemplate.exchange(requestEntity, Resource.class);
         HttpStatus statusCode = responseEntity.getStatusCode();
         if (statusCode.is2xxSuccessful()) {

@@ -14,12 +14,18 @@ public class DemoClientProvider implements DemoClient {
 
     @Override
     public User getUser() {
-        return null;
+        User user = new User();
+        user.setUsername("yeemin");
+        user.setEmail("yeeminshon@hotmail.com");
+        return user;
     }
 
     @Override
     public User getUserByUsername(String username) {
-        return null;
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail("yeeminshon@hotmail.com");
+        return user;
     }
 
 

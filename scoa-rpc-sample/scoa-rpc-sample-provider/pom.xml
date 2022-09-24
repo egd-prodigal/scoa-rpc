@@ -59,6 +59,11 @@
             <artifactId>scoa-rpc-annotations</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.egd-prodigal</groupId>
+            <artifactId>scoa-rpc-provider</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
 </project>
