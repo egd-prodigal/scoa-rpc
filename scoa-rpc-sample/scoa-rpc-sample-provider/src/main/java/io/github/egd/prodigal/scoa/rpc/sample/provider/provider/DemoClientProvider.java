@@ -4,10 +4,14 @@ import io.github.egd.prodigal.scoa.rpc.annotations.ScoaRpcProvider;
 import io.github.egd.prodigal.scoa.rpc.client.DemoClient;
 import io.github.egd.prodigal.scoa.rpc.dto.User;
 import io.github.egd.prodigal.scoa.rpc.sample.provider.service.DemoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 @ScoaRpcProvider(version = "1.0.1", group = "sample")
 public class DemoClientProvider implements DemoClient {
+
+    private final Logger logger = LoggerFactory.getLogger(DemoClientProvider.class);
 
     @Autowired
     private DemoService demoService;
@@ -19,6 +23,7 @@ public class DemoClientProvider implements DemoClient {
 
     @Override
     public User getUser() {
+        logger.info("getUser");
         return demoService.getUser();
     }
 
@@ -28,6 +33,11 @@ public class DemoClientProvider implements DemoClient {
         user.setUsername(username);
         user.setEmail("yeeminshon@outlook.com");
         return user;
+    }
+
+    @Override
+    public void saveUser(User user) {
+        logger.info("save user, {}", user);
     }
 
 

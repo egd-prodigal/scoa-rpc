@@ -43,13 +43,13 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
 
     private static final Map<String, ILoadBalancer> loadBalancerMap = new HashMap<>();
 
-    private ApplicationContext applicationContext;
-
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     private final ReentrantReadWriteLock.ReadLock readLock = readWriteLock.readLock();
 
     private final ReentrantReadWriteLock.WriteLock writeLock = readWriteLock.writeLock();
+
+    private DiscoveryClient discoveryClient;
 
     @Override
     public void onApplicationEvent(@NonNull HeartbeatEvent event) {
@@ -58,7 +58,6 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
 
     @Override
     public void afterSingletonsInstantiated() {
-        DiscoveryClient discoveryClient = applicationContext.getBean(DiscoveryClient.class);
         List<String> services = discoveryClient.getServices();
         if (services.size() > 0) {
             JsonObject providers = new JsonObject();
@@ -96,12 +95,12 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
                 writeLock.unlock();
             }
         }
-        logger.info("provider-holder: {}", providerHolder);
-        logger.info("instance-map: {}", instanceInfoMap);
+        logger.debug("provider-holder: {}", providerHolder);
+        logger.debug("instance-map: {}", instanceInfoMap);
     }
 
     private synchronized void registerRpcProvider(JsonObject providers, String serviceId, String rpcProvider) {
-        logger.info("serviceId: {}, rpc-provider: {}", serviceId, rpcProvider);
+        logger.debug("serviceId: {}, rpc-provider: {}", serviceId, rpcProvider);
         String[] rpcProviderArray = rpcProvider.split("&");
         for (String rpcProviderPackage : rpcProviderArray) {
             int leftBraceIndex = rpcProviderPackage.indexOf("{");
@@ -171,8 +170,10 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
     public Server chooseServer(String packageName, String className, String version, String group, String methodName, String... parameterTypes) {
         String key = String.join(",", packageName, className, version, group, methodName, parameterTypes == null ? "" : String.join(",", parameterTypes));
         ILoadBalancer loadBalancer;
+        Map<String, List<InstanceInfo>> map = new HashMap<>();
         readLock.lock();
         try {
+            map.putAll(instanceInfoMap);
             loadBalancer = loadBalancerMap.get(key);
         } finally {
             readLock.unlock();
@@ -180,7 +181,7 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
         if (loadBalancer == null) {
             List<String> services = chooseServices(packageName, className, version, group, methodName, parameterTypes);
             loadBalancer = new DynamicServerListLoadBalancer<>();
-            List<Server> servers = services.stream().flatMap(service -> instanceInfoMap.get(service).stream())
+            List<Server> servers = services.stream().flatMap(service -> map.get(service).stream())
                     .map(instanceInfo -> new Server("http", instanceInfo.getIPAddr(), instanceInfo.getPort()))
                     .collect(Collectors.toList());
             loadBalancer.addServers(servers);
@@ -243,7 +244,7 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
 
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
-        this.applicationContext = applicationContext;
+        this.discoveryClient = applicationContext.getBean(DiscoveryClient.class);
     }
 
 }

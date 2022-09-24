@@ -59,7 +59,7 @@ public class ScoaRpcConsumerProxy implements InvocationHandler {
         requestEntity = bodyBuilder.body(body);
         ResponseEntity<Resource> responseEntity = restTemplate.exchange(requestEntity, Resource.class);
         HttpStatus statusCode = responseEntity.getStatusCode();
-        if (statusCode.is2xxSuccessful()) {
+        if (statusCode.is2xxSuccessful() && !"void".equals(returnType.getName())) {
             Resource resource = responseEntity.getBody();
             if (resource != null) {
                 try (InputStream inputStream = resource.getInputStream();

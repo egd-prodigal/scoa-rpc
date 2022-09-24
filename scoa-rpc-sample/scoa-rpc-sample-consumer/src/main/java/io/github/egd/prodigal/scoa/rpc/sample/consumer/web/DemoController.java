@@ -20,6 +20,7 @@ public class DemoController {
     public User demo() {
         User user = demoClient.getUser();
         user = demoClient.getUserByUsername("yeeminshon");
+        demoClient.saveUser(user);
         return user;
     }
 

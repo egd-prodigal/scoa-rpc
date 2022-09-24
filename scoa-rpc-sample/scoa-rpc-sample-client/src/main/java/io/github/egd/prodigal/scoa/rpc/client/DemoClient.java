@@ -10,4 +10,6 @@ public interface DemoClient {
 
     User getUserByUsername(String username);
 
+    void saveUser(User user);
+
 }
