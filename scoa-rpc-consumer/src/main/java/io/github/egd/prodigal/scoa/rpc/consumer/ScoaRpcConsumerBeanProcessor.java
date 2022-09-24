@@ -1,12 +1,14 @@
 package io.github.egd.prodigal.scoa.rpc.consumer;
 
 import io.github.egd.prodigal.scoa.rpc.annotations.ScoaRpcConsumer;
-import org.apache.commons.lang.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.PriorityOrdered;
 import org.springframework.lang.NonNull;
 
@@ -15,9 +17,11 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
-public class ScoaRpcConsumerBeanProcessor implements SmartInstantiationAwareBeanPostProcessor, PriorityOrdered {
+public class ScoaRpcConsumerBeanProcessor implements SmartInstantiationAwareBeanPostProcessor, PriorityOrdered, ApplicationContextAware {
 
     private final Logger logger = LoggerFactory.getLogger(ScoaRpcConsumerBeanProcessor.class);
+
+    private ScoaRpcConsumerServiceHolder scoaRpcConsumerServiceHolder;
 
     @Override
     public Object postProcessAfterInitialization(@NonNull Object bean, @NonNull String beanName) throws BeansException {
@@ -42,7 +46,7 @@ public class ScoaRpcConsumerBeanProcessor implements SmartInstantiationAwareBean
     }
 
     private Object proxyJdk(Class<?> type, InvocationHandler invocationHandle, ScoaRpcConsumer rpcConsumerAnnotation) {
-        ScoaRpcConsumerServiceChooser serviceChooser = new ScoaRpcConsumerServiceChooser(invocationHandle, rpcConsumerAnnotation);
+        ScoaRpcConsumerServiceChooser serviceChooser = new ScoaRpcConsumerServiceChooser(invocationHandle, rpcConsumerAnnotation, scoaRpcConsumerServiceHolder);
         return Proxy.newProxyInstance(type.getClassLoader(), new Class[]{type}, serviceChooser);
     }
 
@@ -51,4 +55,8 @@ public class ScoaRpcConsumerBeanProcessor implements SmartInstantiationAwareBean
         return Integer.MAX_VALUE;
     }
 
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        scoaRpcConsumerServiceHolder = applicationContext.getBean(ScoaRpcConsumerServiceHolder.class);
+    }
 }

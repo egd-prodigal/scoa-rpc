@@ -20,8 +20,8 @@ public class ScoaRpcConsumerConfiguration {
     }
 
     @Bean
-    public ScoaRpcConsumerContext scoaRpcConsumerContext() {
-        return new ScoaRpcConsumerContext();
+    public ScoaRpcConsumerServiceHolder scoaRpcConsumerContext() {
+        return new ScoaRpcConsumerServiceHolder();
     }
 
 }
