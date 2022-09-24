@@ -46,6 +46,7 @@ public class ScoaRpcConsumerServiceChooser implements InvocationHandler {
         } else {
             serviceId = serviceHolder.chooseServiceId(packageName, className, version, group, methodName);
         }
+        logger.info("will send rpc to service: {}", serviceId);
         Object[] fillArgs = args == null ? new Object[3] : new Object[args.length + 3];
         if (args != null && args.length > 0) {
             System.arraycopy(args, 0, fillArgs, 0, args.length);

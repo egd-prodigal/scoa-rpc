@@ -3,9 +3,6 @@ package io.github.egd.prodigal.scoa.rpc.consumer;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.netflix.appinfo.InstanceInfo;
-import com.netflix.discovery.shared.Application;
-import com.netflix.discovery.shared.Applications;
 import com.netflix.loadbalancer.DynamicServerListLoadBalancer;
 import com.netflix.loadbalancer.ILoadBalancer;
 import com.netflix.loadbalancer.Server;
@@ -16,7 +13,6 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.cloud.client.discovery.event.HeartbeatEvent;
-import org.springframework.cloud.netflix.eureka.CloudEurekaClient;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationListener;
@@ -50,41 +46,39 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
 
     @Override
     public void onApplicationEvent(HeartbeatEvent event) {
-        Object source = event.getSource();
-        CloudEurekaClient cloudEurekaClient = (CloudEurekaClient) source;
-        Applications applications = cloudEurekaClient.getApplications();
-        List<Application> registeredApplications = applications.getRegisteredApplications();
-        registeredApplications.forEach(registeredApplication -> {
-            List<InstanceInfo> instances = registeredApplication.getInstances();
-            instances.forEach(instanceInfo -> {
-                Map<String, String> metadata = instanceInfo.getMetadata();
-                if (metadata.containsKey(SCOA_RPC_PROVIDER)) {
-                    String rpcProvider = metadata.get(SCOA_RPC_PROVIDER);
-                    registerRpcProvider(registeredApplication.getName(), rpcProvider);
-                }
-            });
-        });
+        afterSingletonsInstantiated();
     }
 
     @Override
     public void afterSingletonsInstantiated() {
         DiscoveryClient discoveryClient = applicationContext.getBean(DiscoveryClient.class);
         List<String> services = discoveryClient.getServices();
-        services.forEach(service -> {
-            List<ServiceInstance> instances = discoveryClient.getInstances(service);
-            instances.forEach(serviceInstance -> {
-                Map<String, String> metadata = serviceInstance.getMetadata();
-                if (metadata.containsKey(SCOA_RPC_PROVIDER)) {
-                    String rpcProvider = metadata.get(SCOA_RPC_PROVIDER);
-                    registerRpcProvider(service, rpcProvider);
-                }
+        if (services.size() > 0) {
+            JsonObject providers = new JsonObject();
+            services.forEach(service -> {
+                List<ServiceInstance> instances = discoveryClient.getInstances(service);
+                instances.forEach(serviceInstance -> {
+                    Map<String, String> metadata = serviceInstance.getMetadata();
+                    if (metadata.containsKey(SCOA_RPC_PROVIDER)) {
+                        String rpcProvider = metadata.get(SCOA_RPC_PROVIDER);
+                        registerRpcProvider(providers, service, rpcProvider);
+                    }
+                });
             });
-        });
+            writeLock.lock();
+            try {
+                providerHolder.remove("providers");
+                providerHolder.add("providers", providers);
+                loadBalancerMap.clear();
+            } finally {
+                writeLock.unlock();
+            }
+        }
+        logger.info("provider-holder: {}", providerHolder);
     }
 
-    private synchronized void registerRpcProvider(String serviceId, String rpcProvider) {
+    private synchronized void registerRpcProvider(JsonObject providers, String serviceId, String rpcProvider) {
         logger.info("serviceId: {}, rpc-provider: {}", serviceId, rpcProvider);
-        JsonObject providers = new JsonObject();
         String[] rpcProviderArray = rpcProvider.split("&");
         for (String rpcProviderPackage : rpcProviderArray) {
             int leftBraceIndex = rpcProviderPackage.indexOf("{");
@@ -146,14 +140,6 @@ public class ScoaRpcConsumerServiceHolder implements ApplicationListener<Heartbe
                     parameterJson.add(serviceId);
                 }
             }
-        }
-        writeLock.lock();
-        try {
-            providerHolder.remove("providers");
-            providerHolder.add("providers", providers);
-            loadBalancerMap.clear();
-        } finally {
-            writeLock.unlock();
         }
     }
 
