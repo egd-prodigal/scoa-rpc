@@ -45,7 +45,6 @@ public class ScoaRpcProviderBeanProcessor implements BeanPostProcessor {
             Map<String, List<String>> map = new HashMap<>();
             for (Class<?> aClass : classSet) {
                 for (Class<?> clientClass : aClass.getInterfaces()) {
-//                    Class<?> clientClass ?= aClass.getInterfaces();
                     String packageName = clientClass.getPackage().getName();
                     if (!map.containsKey(packageName)) {
                         map.put(packageName, new ArrayList<>());

@@ -1,9 +1,12 @@
 package io.github.egd.prodigal.scoa.rpc.provider;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @ConfigurationProperties(prefix = "scoa.rpc.provider")
 public class ScoaRpcProviderConfigBean {
+
+    private int port = RandomUtils.nextInt(2000, 5000);
 
     private int workerIoThreads = 1024;
 
@@ -17,6 +20,13 @@ public class ScoaRpcProviderConfigBean {
 
     private int regionSize = 200;
 
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
 
     public int getWorkerIoThreads() {
         return workerIoThreads;
