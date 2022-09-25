@@ -9,8 +9,8 @@ public class ScoaRpcProviderConfiguration {
 
     @Bean
     public ScoaRpcProviderBeanProcessor scoaRpcProviderBeanProcessor(@Autowired Environment environment) {
-        String port = environment.getProperty("scoa.rpc.provider.port", RandomUtils.nextInt(20000, 50000) + "");
-        return new ScoaRpcProviderBeanProcessor(Integer.parseInt(port));
+        Integer port = environment.getProperty("scoa.rpc.provider.port", Integer.class, RandomUtils.nextInt(20000, 50000));
+        return new ScoaRpcProviderBeanProcessor(port);
     }
 
     @Bean
