@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-@ScoaRpcProvider(version = "1.0.1", group = "sample")
+@ScoaRpcProvider(version = "2.0.2", group = "test")
 public class DemoClientProvider2 implements DemoClient2 {
 
     private final Logger logger = LoggerFactory.getLogger(DemoClientProvider2.class);

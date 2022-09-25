@@ -45,7 +45,7 @@ public class ScoaRpcConsumerRegister implements ImportBeanDefinitionRegistrar {
                 beanDefinition.getConstructorArgumentValues().addGenericArgumentValue(value);
                 beanDefinition.setBeanClass(ScoaRpcConsumerFactory.class);
                 beanDefinition.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
-                registry.registerBeanDefinition(beanDefinition.getBeanClass().getName(), beanDefinition);
+                registry.registerBeanDefinition(value, beanDefinition);
             });
         }
     }
