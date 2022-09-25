@@ -1,5 +1,5 @@
 # scoa-rpc
-scoa rpc，是我心血来潮编写的一套微服务RPC框架，只适用于springboot，基于eureka注册中心，实现以"服务"为核心的RPC架构
+scoa rpc，是我心血来潮编写的一套微服务RPC框架，只适用于springboot，基于eureka注册中心，编码风格于dubbo类似，并实现以"服务"为核心的RPC架构
 
 ## 使用方法
 > 初稿，还有无数需要完善的地方，暂未提交中央仓库，以下请参照sample项目
