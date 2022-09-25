@@ -90,7 +90,6 @@ public class ScoaRpcProviderBeanProcessor implements BeanPostProcessor {
             eurekaInstanceConfigBean.getMetadataMap().put("scoa.rpc.provider.info", scoaRpcProviderInfo);
             eurekaInstanceConfigBean.getMetadataMap().put("scoa.rpc.provider.port", String.valueOf(port));
             logger.info("scoa.rpc.provider.info: {}", scoaRpcProviderInfo);
-            logger.info("scoa.rpc.provider.port: {}", port);
             classSet.clear();
         }
         return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);

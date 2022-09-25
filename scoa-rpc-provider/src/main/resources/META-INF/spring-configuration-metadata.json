@@ -1,0 +1,46 @@
+{
+  "properties": [
+    {
+      "name": "scoa.rpc.provider.worker-io-threads",
+      "defaultValue": 1024,
+      "description": "provider服务的io线程数.",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.egd.prodigal.scoa.rpc.provider.ScoaRpcProviderConfigBean"
+    },
+    {
+      "name": "scoa.rpc.provider.task-core-threads",
+      "defaultValue": 200,
+      "description": "provider任务核心线程数.",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.egd.prodigal.scoa.rpc.provider.ScoaRpcProviderConfigBean"
+    },
+    {
+      "name": "scoa.rpc.provider.task-max-threads",
+      "defaultValue": 800,
+      "description": "provider任务核心最大线程数.",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.egd.prodigal.scoa.rpc.provider.ScoaRpcProviderConfigBean"
+    },
+    {
+      "name": "scoa.rpc.provider.socket-io-threads",
+      "defaultValue": 1024,
+      "description": "provider的socket的io线程数.",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.egd.prodigal.scoa.rpc.provider.ScoaRpcProviderConfigBean"
+    },
+    {
+      "name": "scoa.rpc.provider.buffer-size",
+      "defaultValue": 4096,
+      "description": "provider的缓冲区大小.",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.egd.prodigal.scoa.rpc.provider.ScoaRpcProviderConfigBean"
+    },
+    {
+      "name": "scoa.rpc.provider.region-size",
+      "defaultValue": 200,
+      "description": "provider的缓冲分区数.",
+      "type": "java.lang.Integer",
+      "sourceType": "io.github.egd.prodigal.scoa.rpc.provider.ScoaRpcProviderConfigBean"
+    }
+  ]
+}

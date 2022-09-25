@@ -16,8 +16,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.cloud.netflix.eureka.EurekaInstanceConfigBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.EnvironmentAware;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.xnio.*;
@@ -28,42 +26,43 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ScoaRpcProviderServer implements ApplicationRunner, ApplicationContextAware, EnvironmentAware {
+public class ScoaRpcProviderServer implements ApplicationRunner, ApplicationContextAware {
 
     private final Logger logger = LoggerFactory.getLogger(ScoaRpcProviderServer.class);
 
     private ApplicationContext applicationContext;
 
-    private Environment environment;
-
     private final Integer port;
+
+    private final ScoaRpcProviderConfigBean configBean;
 
     private static final Gson gson = new GsonBuilder().create();
 
     private final Map<String, ScoaRpcProviderHolder> providerHolderMap = new ConcurrentHashMap<>();
 
-    public ScoaRpcProviderServer(Integer port) {
+    public ScoaRpcProviderServer(Integer port, ScoaRpcProviderConfigBean configBean) {
         this.port = port;
+        this.configBean = configBean;
     }
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
         Xnio xnio = Xnio.getInstance();
         XnioWorker worker = xnio.createWorker(OptionMap.builder()
-                .set(Options.WORKER_IO_THREADS, environment.getProperty("scoa.rpc.provider.worker.io.threads", Integer.class, 1024))
-                .set(Options.WORKER_TASK_CORE_THREADS, environment.getProperty("scoa.rpc.provider.task.core.threads", Integer.class, 200))
-                .set(Options.WORKER_TASK_MAX_THREADS, environment.getProperty("scoa.rpc.provider.task.max.threads", Integer.class, 800))
+                .set(Options.WORKER_IO_THREADS, configBean.getWorkerIoThreads())
+                .set(Options.WORKER_TASK_CORE_THREADS, configBean.getTaskCoreThreads())
+                .set(Options.WORKER_TASK_MAX_THREADS, configBean.getTaskMaxThreads())
                 .set(Options.TCP_NODELAY, true)
                 .getMap());
 
         OptionMap socketOptions = OptionMap.builder()
-                .set(Options.WORKER_IO_THREADS, environment.getProperty("scoa.rpc.provider.socket.io.threads", Integer.class, 1024))
+                .set(Options.WORKER_IO_THREADS, configBean.getSocketIoThreads())
                 .set(Options.TCP_NODELAY, true)
                 .set(Options.REUSE_ADDRESSES, true)
                 .getMap();
 
-        Integer bufferSize = environment.getProperty("scoa.rpc.provider.buffer.size", Integer.class, 4096);
-        Integer regionSize = environment.getProperty("scoa.rpc.provider.region.size", Integer.class, 200);
+        int bufferSize = configBean.getBufferSize();
+        int regionSize = configBean.getRegionSize();
         Pool<ByteBuffer> buffers = new ByteBufferSlicePool(BufferAllocator.DIRECT_BYTE_BUFFER_ALLOCATOR, bufferSize, regionSize * bufferSize);
 
         ByteBufferPool byteBufferPool = new XnioByteBufferPool(buffers);
@@ -92,21 +91,14 @@ public class ScoaRpcProviderServer implements ApplicationRunner, ApplicationCont
         EurekaInstanceConfigBean eurekaInstanceConfigBean = applicationContext.getBean(EurekaInstanceConfigBean.class);
         String ipAddress = eurekaInstanceConfigBean.getIpAddress();
         InetSocketAddress bindAddress = new InetSocketAddress(ipAddress, port);
-        logger.info("undertow server will start at: {}", port);
-        AcceptingChannel<? extends StreamConnection> server = worker.createStreamConnectionServer(bindAddress, acceptListener, socketOptions);
-        server.resumeAccepts();
-        logger.info("undertow started");
+        logger.info("provider will start in undertow at port: {}", port);
+        worker.createStreamConnectionServer(bindAddress, acceptListener, socketOptions).resumeAccepts();
+        logger.info("provider started");
     }
 
     @Override
     public void setApplicationContext(@NonNull ApplicationContext applicationContext) throws BeansException {
         this.applicationContext = applicationContext;
     }
-
-    @Override
-    public void setEnvironment(@NonNull Environment environment) {
-        this.environment = environment;
-    }
-
 
 }

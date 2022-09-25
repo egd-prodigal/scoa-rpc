@@ -1,7 +1,6 @@
 package io.github.egd.prodigal.scoa.rpc.provider;
 
 import io.github.egd.prodigal.scoa.rpc.annotations.ScoaRpcProvider;
-import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -14,7 +13,6 @@ import org.springframework.core.type.ClassMetadata;
 import org.springframework.lang.NonNull;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 public class ScoaRpcProviderRegister implements ImportBeanDefinitionRegistrar {
@@ -33,7 +31,7 @@ public class ScoaRpcProviderRegister implements ImportBeanDefinitionRegistrar {
         scanner.addIncludeFilter((metadataReader, metadataReaderFactory) -> {
             ClassMetadata classMetadata = metadataReader.getClassMetadata();
             boolean isRpcProvider = metadataReader.getAnnotationMetadata().hasAnnotation(ScoaRpcProvider.class.getName());
-            return isRpcProvider  && classMetadata.isConcrete() && classMetadata.isIndependent()
+            return isRpcProvider && classMetadata.isConcrete() && classMetadata.isIndependent()
                     && classMetadata.hasSuperClass() && !classMetadata.isAbstract() && !classMetadata.isInterface();
         });
         scanner.setScopedProxyMode(ScopedProxyMode.TARGET_CLASS);
